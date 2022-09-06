@@ -1801,16 +1801,22 @@ static struct l2cap_chan *l2cap_global_chan_by_psm(int state, __le16 psm,
 			dst_match = !bacmp(&c->dst, dst);
 			if (src_match && dst_match) {
 <<<<<<< HEAD
+<<<<<<< HEAD
 				l2cap_chan_hold(c);
 				read_unlock(&chan_list_lock);
 				return c;
 =======
+=======
+>>>>>>> d76a851fb9ad (Merge "Merge 4.14.291 into android-4.14-stable" into android-4.14-stable)
 				c = l2cap_chan_hold_unless_zero(c);
 				if (c) {
 					read_unlock(&chan_list_lock);
 					return c;
 				}
+<<<<<<< HEAD
 >>>>>>> 334b33732c4c (Merge 4.14.291 into android-4.14-stable)
+=======
+>>>>>>> d76a851fb9ad (Merge "Merge 4.14.291 into android-4.14-stable" into android-4.14-stable)
 			}
 
 			/* Closest match */
