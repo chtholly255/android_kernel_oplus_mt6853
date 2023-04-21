@@ -4341,32 +4341,35 @@ static inline int l2cap_disconnect_req(struct l2cap_conn *conn,
 
 	BT_DBG("scid 0x%4.4x dcid 0x%4.4x", scid, dcid);
 
-	mutex_lock(&conn->chan_lock);
-
-	chan = __l2cap_get_chan_by_scid(conn, dcid);
+	chan = l2cap_get_chan_by_scid(conn, dcid);
 	if (!chan) {
-		mutex_unlock(&conn->chan_lock);
 		cmd_reject_invalid_cid(conn, cmd->ident, dcid, scid);
 		return 0;
 	}
 
+<<<<<<< HEAD
 	l2cap_chan_lock(chan);
 
+=======
+>>>>>>> 7b854fbace34 (Merge 4.14.313 into android-4.14-stable)
 	rsp.dcid = cpu_to_le16(chan->scid);
 	rsp.scid = cpu_to_le16(chan->dcid);
 	l2cap_send_cmd(conn, cmd->ident, L2CAP_DISCONN_RSP, sizeof(rsp), &rsp);
 
 	chan->ops->set_shutdown(chan);
 
+<<<<<<< HEAD
 	l2cap_chan_hold(chan);
+=======
+	mutex_lock(&conn->chan_lock);
+>>>>>>> 7b854fbace34 (Merge 4.14.313 into android-4.14-stable)
 	l2cap_chan_del(chan, ECONNRESET);
+	mutex_unlock(&conn->chan_lock);
 
 	l2cap_chan_unlock(chan);
 
 	chan->ops->close(chan);
 	l2cap_chan_put(chan);
-
-	mutex_unlock(&conn->chan_lock);
 
 	return 0;
 }
@@ -4387,14 +4390,13 @@ static inline int l2cap_disconnect_rsp(struct l2cap_conn *conn,
 
 	BT_DBG("dcid 0x%4.4x scid 0x%4.4x", dcid, scid);
 
-	mutex_lock(&conn->chan_lock);
-
-	chan = __l2cap_get_chan_by_scid(conn, scid);
+	chan = l2cap_get_chan_by_scid(conn, scid);
 	if (!chan) {
 		mutex_unlock(&conn->chan_lock);
 		return 0;
 	}
 
+<<<<<<< HEAD
 	l2cap_chan_lock(chan);
 
 	if (chan->state != BT_DISCONN) {
@@ -4404,14 +4406,22 @@ static inline int l2cap_disconnect_rsp(struct l2cap_conn *conn,
 	}
 
 	l2cap_chan_hold(chan);
+=======
+	if (chan->state != BT_DISCONN) {
+		l2cap_chan_unlock(chan);
+		l2cap_chan_put(chan);
+		return 0;
+	}
+
+	mutex_lock(&conn->chan_lock);
+>>>>>>> 7b854fbace34 (Merge 4.14.313 into android-4.14-stable)
 	l2cap_chan_del(chan, 0);
+	mutex_unlock(&conn->chan_lock);
 
 	l2cap_chan_unlock(chan);
 
 	chan->ops->close(chan);
 	l2cap_chan_put(chan);
-
-	mutex_unlock(&conn->chan_lock);
 
 	return 0;
 }
