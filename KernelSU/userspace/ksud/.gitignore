@@ -1,2 +1,4 @@
 /target
-.cargo/
+.cargo/config.toml
+*.bak
+*.sh
