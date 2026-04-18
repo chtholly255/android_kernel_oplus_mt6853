@@ -896,15 +896,8 @@ block_t f2fs_get_unusable_blocks(struct f2fs_sb_info *sbi)
 	mutex_unlock(&dirty_i->seglist_lock);
 
 	unusable = holes[DATA] > holes[NODE] ? holes[DATA] : holes[NODE];
-	if (unusable > ovp_holes) {
-		if (unusable - ovp_holes > sbi->user_block_count) {
-			f2fs_info(sbi, "ovp_holes:%u,unusable:%u,userblkcnt:%u",
-				ovp_holes, unusable, sbi->user_block_count);
-			f2fs_bug_on(sbi, 1);
-			return sbi->user_block_count;
-		}
+	if (unusable > ovp_holes)
 		return unusable - ovp_holes;
-	}
 	return 0;
 }
 
@@ -912,19 +905,11 @@ int f2fs_disable_cp_again(struct f2fs_sb_info *sbi, block_t unusable)
 {
 	int ovp_hole_segs =
 		(overprovision_segments(sbi) - reserved_segments(sbi));
-	if (unusable > F2FS_OPTION(sbi).unusable_cap) {
-		f2fs_err(sbi, " f2fs_disable_cp_again unusable > F2FS_OPTION(sbi).unusable_cap unusable:%d, F2FS_OPTION(sbi).unusable_cap:%u",
-				 unusable, F2FS_OPTION(sbi).unusable_cap);
-		f2fs_bug_on(sbi, 1);
+	if (unusable > F2FS_OPTION(sbi).unusable_cap)
 		return -EAGAIN;
-	}
 	if (is_sbi_flag_set(sbi, SBI_CP_DISABLED_QUICK) &&
-		dirty_segments(sbi) > ovp_hole_segs) {
-		f2fs_err(sbi, " f2fs_disable_cp_again dirty_segments(sbi) > ovp_hole_segs :dirty_segments(sbi):%llu ovp_hole_segs:%d",
-				dirty_segments(sbi), ovp_hole_segs);
-		f2fs_bug_on(sbi, 1);
+		dirty_segments(sbi) > ovp_hole_segs)
 		return -EAGAIN;
-		}
 	return 0;
 }
 
@@ -3313,9 +3298,6 @@ int f2fs_inplace_write_data(struct f2fs_io_info *fio)
 			  __func__, segno);
 		return -EFSCORRUPTED;
 	}
-
-	invalidate_mapping_pages(META_MAPPING(sbi),
-					fio->new_blkaddr, fio->new_blkaddr);
 
 	stat_inc_inplace_blocks(fio->sbi);
 
