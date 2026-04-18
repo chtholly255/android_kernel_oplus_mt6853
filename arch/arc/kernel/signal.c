@@ -138,7 +138,7 @@ stash_usr_regs(struct rt_sigframe __user *sf, struct pt_regs *regs,
 
 	err |= __copy_to_user(&sf->uc.uc_sigmask, set, sizeof(sigset_t));
 
-	return err ? -EFAULT : 0;
+	return err;
 }
 
 static int restore_usr_regs(struct pt_regs *regs, struct rt_sigframe __user *sf)
@@ -156,7 +156,7 @@ static int restore_usr_regs(struct pt_regs *regs, struct rt_sigframe __user *sf)
 		err |= restore_arcv2_regs(&(sf->uc.uc_mcontext), regs);
 
 	if (err)
-		return -EFAULT;
+		return err;
 
 	set_current_blocked(&set);
 	regs->bta	= uregs.scratch.bta;
