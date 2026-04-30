@@ -137,7 +137,7 @@ FILLDIR_RETURN_TYPE my_actor(MY_ACTOR_CTX_ARG, const char *name, int namelen, lo
     }
 
     // now put this on candidate_path
-    if (d_type == DT_REG && !strncmp(name, "base.apk", 8)) {
+    if (d_type == DT_REG && namelen == 8 && !strncmp(name, "base.apk", 8)) {
         snprintf(candidate_path, DATA_PATH_LEN, "%s/%.*s", my_ctx->parent_dir, namelen, name);
     }
 
@@ -443,7 +443,7 @@ void track_throne(bool prune_only, bool force_search_manager, bool from_renameat
 
 // for 6.8- kernel, we can use LSM hook in manual hook
 // 6.8+, we use pkg_observer
-#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 8, 0) && !defined(KSU_TP_HOOK)
+#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 8, 0) && !defined(CONFIG_KSU_TRACEPOINT_HOOK)
 void ksu_handle_rename(struct dentry *old_dentry, struct dentry *new_dentry)
 {
     // skip kernel threads

@@ -30,9 +30,14 @@
 #include "feature/dynamic_manager.h"
 #include "feature/sucompat.h"
 #include "hook/setuid_hook.h"
+#include "compat/kernel_compat.h"
+
+#ifdef CONFIG_ARM64
+#include "compat/apatch_conflict.h"
+#endif
 
 // if we are using the upstream hook, check x86-64 compatible
-#if defined(KSU_TP_HOOK) && defined(__x86_64__)
+#if defined(CONFIG_KSU_TRACEPOINT_HOOK) && defined(__x86_64__)
 #include <asm/cpufeature.h>
 #include <linux/version.h>
 #ifndef X86_FEATURE_INDIRECT_SAFE
@@ -79,19 +84,19 @@ struct cred *ksu_cred;
 bool ksu_late_loaded;
 
 // dispatcher of ksu hooks
-#ifdef KSU_TP_HOOK
+#ifdef CONFIG_KSU_TRACEPOINT_HOOK
 #include "hook/syscall_hook_manager.h"
 #include "hook/syscall_hook.h"
 #endif
 
 static inline void ksu_hook_init(void)
 {
-#if defined(KSU_TP_HOOK)
+#if defined(CONFIG_KSU_TRACEPOINT_HOOK)
     ksu_syscall_hook_init();
     ksu_syscall_hook_manager_init();
 #elif defined(CONFIG_KSU_MANUAL_HOOK)
 // only lsm hook need call init
-#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 8, 0) && LINUX_VERSION_CODE >= KERNEL_VERSION(4, 2, 0)
+#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 8, 0)
     ksu_lsm_hook_init();
 #endif
 #elif defined(CONFIG_KSU_SUSFS)
@@ -106,11 +111,19 @@ static inline void ksu_hook_init(void)
 
 static inline void ksu_hook_exit(void)
 {
-#if defined(KSU_TP_HOOK)
+#if defined(CONFIG_KSU_TRACEPOINT_HOOK)
     ksu_syscall_hook_manager_exit();
 #else
     ksu_sucompat_exit();
     ksu_setuid_hook_exit();
+#endif
+}
+
+void setup_ksu_cred(void)
+{
+    setup_ksu_cred_selinux();
+#ifdef KSU_COMPAT_REQUIRE_SESSION_KEYRING
+    setup_ksu_cred_session_keyring();
 #endif
 }
 
@@ -130,7 +143,7 @@ int __init kernelsu_init(void)
 #endif
 
     // If we are in tracepoint hook, remember to check x86-64 compatible
-#if defined(KSU_TP_HOOK) && defined(__x86_64__)
+#if defined(CONFIG_KSU_TRACEPOINT_HOOK) && defined(__x86_64__)
     // If the kernel has the hardening patch, X86_FEATURE_INDIRECT_SAFE must be set
     if (!boot_cpu_has(X86_FEATURE_INDIRECT_SAFE)) {
         pr_alert("*************************************************************");
@@ -159,6 +172,10 @@ int __init kernelsu_init(void)
     if (allow_shell) {
         pr_alert("shell is allowed at init!");
     }
+
+#ifdef CONFIG_ARM64
+    ksu_start_apatch_conflict_check();
+#endif
 
     ksu_cred = prepare_creds();
     if (!ksu_cred) {
