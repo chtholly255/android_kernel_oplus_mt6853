@@ -1,78 +1,31 @@
-OPlus MT6853 通用内核项目
-这是一个针对 OPPO / Realme (OPlus) 平台，基于联发科 MT6853 (天玑 720/800U) 芯片组定制的 Linux 内核。本项目在原生代码基础上进行了大量的上游同步与特性移植，旨在提升系统性能与安全性。
+# OPlus MT6853 Universal Kernel
 
-📱 支持设备
-理论上支持所有搭载 MT6853 芯片组的 OPlus 系列设备，包括但不限于：
+![Kernel Version](https://img.shields.io/badge/Kernel-4.14.336%2B-blue.svg)
+![Platform](https://img.shields.io/badge/Platform-MT6853-orange.svg)
+![Toolchain](https://img.shields.io/badge/Clang-6443078-red.svg)
 
-OPPO A72 5G / A92s
+针对 **OPPO / Realme (OPlus)** 平台开发的高性能通用内核，基于联发科 **MT6853 (天玑 720 / 800U)** 芯片组。
 
-Realme V5 / V15
+## 📱 支持设备
+理论上支持所有搭载 MT6853 芯片组的 OPlus 设备：
+- OPPO A72 5G / A92s / Reno4 SE
+- Realme V5 / V15 / Q2i
+- 其他同平台的 OPlus 设备
 
-OPPO Reno4 SE
+## ✨ 主要特性
 
-其他同平台的 OPlus 设备
+### 1. 内核版本同步 (LTS)
+- **版本更新**：从 `4.14.186` 深度同步至 **`4.14.336+`**。
+- **安全性**：集成了上游安全补丁，提升系统稳定性。
 
-✨ 主要特性
-⬆️ 内核版本升级 (LTS Update)
-版本更新：从传统的 4.14.186 深度同步至 4.14.336+ (持续跟进长期支持分支)。
+### 2. eBPF 特性 Backport (Android 12+ 适配)
+- **网络监管**：回写了现代 eBPF 特性，支持 Android 12/13 的流量统计与防火墙。
+- **关键修复**：
+    - 修复了 `bpf_verifier_vlog` 导致的内存偏移崩溃。
+    - 修复了 `get_cred_rcu` 原子操作类型不匹配问题（适配 `atomic_long`）。
+    - 优化 `arraymap.c`，移除冗余检查。
 
-稳定性提升：修复了上百个上游安全漏洞（CVE）并优化了内存管理。
+### 3. 功能增强
+- **ReSukiSU**：集成内置 Root 解决方案。
+- **Xiaomi sdFAT**：移植自小米内核的高性能 `sdfat` 驱动，提升 exFAT 格式 SD 卡的读写速度。
 
-🛡️ 核心功能添加
-ReSukiSU：集成了最新的内置 Root 解决方案，提供更隐蔽、更强大的权限管理能力。
-
-BPF 特性 Backport：
-
-深度回写（Backport）了高版本内核的 eBPF 特性。
-
-支持 Android 12+ 的网络监管与流量统计需求。
-
-修复了 BPF 校验器（Verifier）的内存偏移与 get_cred_rcu 适配问题，确保系统不因 BPF 加载而崩溃。
-
-📂 文件系统增强
-Xiaomi sdFAT：从小米内核源码树移植了高性能的 sdfat 驱动。
-
-完美支持大容量 SD 卡（exFAT 格式）。
-
-相比原生驱动，拥有更快的读写速度和更佳的稳定性。
-
-🚀 优化与修复
-ArrayMap Fix：修复了 BPF 中 array_map_update_elem 的冗余检查，提升 Map 更新效率。
-
-编译器优化：支持使用最新的 Clang/LLVM 进行编译，提升二进制执行效率。
-
-🛠️ 编译说明
-环境准备
-建议使用 Ubuntu 20.04+ 或 Arch Linux 环境。
-
-编译步骤
-克隆源码：
-
-Bash
-git clone https://github.com/momo54181/android_kernel_oplus_mt6853.git
-cd android_kernel_oplus_mt6853
-设置工具链： https://github.com/crdroidandroid/android_prebuilts_clang_host_linux-x86_clang-6443078
-确保你的环境变量中包含 AOSP Clang 或 GCC。
-
-开始编译：
-
-Bash
-make O=out <mo-mt6853_defconfig>
-make O=out -j$(nproc)
-📦 刷入方法
-编译完成后，将生成的 Image.gz-dtb 或 dtb 放入 AnyKernel3 模板中。
-
-使用 zip 命令打包。
-
-进入手机 Recovery 模式（如 TWRP），直接刷入生成的 .zip 文件。
-
-🤝 致谢
-Linux Kernel Stable
-
-Google Android Common Kernel
-
-Xiaomi (for sdfat driver)
-
-OPlus (for base sources)
-
-AnyKernel3 (for the flashable template)
