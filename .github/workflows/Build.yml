@@ -41,9 +41,9 @@ jobs:
         cd $GITHUB_WORKSPACE/kernel_workspace
         mkdir -p clang-aosp
 
-        wget -q https://dl.google.com/android/repository/android-ndk-r24-linux.zip
+        wget https://dl.google.com/android/repository/android-ndk-r24-linux.zip
 
-        unzip -q android-ndk-r24-linux.zip
+        unzip android-ndk-r24-linux.zip
 
         mv android-ndk-r24/toolchains/llvm/prebuilt/linux-x86_64/* clang-aosp/
 
@@ -53,7 +53,7 @@ jobs:
     - name: 下载内核源码
       run: |
         cd $GITHUB_WORKSPACE/kernel_workspace
-        git clone https://github.com/momo54181/android_kernel_oplus_mt6853 android-kernel
+        git clone https://github.com/momo54181/android_kernel_oplus_mt6853 --depth=1 android-kernel
         cd android-kernel
 
 
