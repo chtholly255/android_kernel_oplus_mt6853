@@ -36,7 +36,7 @@ jobs:
         wget -O gcc-arm.tar.gz https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/arm/arm-linux-androideabi-4.9/+archive/refs/tags/android-12.1.0_r27.tar.gz
         tar -C gcc32/ -zxvf gcc-arm.tar.gz
     
-    - name: 下载Clang编译器
+    - name: 下载Clang编译器(NDK r24)
       run: |
         cd $GITHUB_WORKSPACE/kernel_workspace
         mkdir -p clang-aosp
@@ -53,7 +53,7 @@ jobs:
     - name: 下载内核源码
       run: |
         cd $GITHUB_WORKSPACE/kernel_workspace
-        git clone https://github.com/momo54181/android_kernel_oplus_mt6853/tree/kernel-main android-kernel
+        git clone https://github.com/momo54181/android_kernel_oplus_mt6853 android-kernel
         cd android-kernel
 
 
@@ -104,3 +104,26 @@ jobs:
       with:
         name: Image.gz
         path: kernel_workspace/android-kernel/out/arch/arm64/boot/Image.gz
+
+    - name: 发布到 GitHub Release
+      uses: softprops/action-gh-release@v1
+      with:
+        # 标签名 & Release 标题，使用当前 Git Commit SHA / 自定义版本
+        tag_name: Kernel-MT6853-$(date +%Y%m%d)
+        name: MT6853 内核编译包 $(date +%Y-%m-%d)
+        # Release 描述
+        body: |
+          自动编译 OPPO/Realme MT6853 安卓12 内核
+          - 编译工具：NDK r24 Clang + GCC 4.9
+          - 内置：ReSukiSU
+          - 编译时间: $(date +%Y-%m-%d %H:%M:%S)
+        # 要上传到 Release 的文件
+        files: |
+          kernel_workspace/AnyKernel3/mt6853-kernel-AnyKernel3.zip
+          kernel_workspace/android-kernel/out/arch/arm64/boot/Image.gz
+        # 仅当推送 tag 时才创建 Release（可选，按需开启）
+        # draft: true      # 设为草稿，手动发布
+        # prerelease: true # 标记为预发布
+      env:
+        # 权限密钥，内置无需手动配置
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
