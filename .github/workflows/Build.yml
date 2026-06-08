@@ -50,8 +50,8 @@ jobs:
     - name: 下载内核源码
       run: |
         cd $GITHUB_WORKSPACE/kernel_workspace
-        # 浅克隆最近 10 条历史，完美平衡“下载速度”与“更新日志获取”
-        git clone -b kernel-main --depth=10 https://github.com/momo54181/android_kernel_oplus_mt6853 android-kernel
+        # 浅克隆最近 5 条历史，完美平衡“下载速度”与“更新日志获取”
+        git clone -b kernel-main --depth=5 https://github.com/momo54181/android_kernel_oplus_mt6853 android-kernel
 
     - name: 更新 ReSukiSU
       run: |
