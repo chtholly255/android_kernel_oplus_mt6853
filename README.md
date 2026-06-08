@@ -6,6 +6,11 @@
 
 这是一个针对 **OPPO / Realme (联发科 MT6853 / 天玑 720)** 机型量身定制的 Android 12 内核源码仓库。本项目集成了主流的内核级特权框架，并实现了基于 GitHub Actions 的全自动 CI/CD 编译构建。
 
+## 📱 支持设备清单
+本内核采用通用配置，支持以下基于 OPlus 底层的 MT6853 机型：
+* **OPPO 系列**: A72 5G, A53 5G, K7x, A95 5G, Reno4 SE
+* **Realme 系列**: Q2, Q2 Pro, Q2i, V5 5G, V15 5G, X7 5G , realme 7 5G, narzo 30 Pro 5G
+
 ---
 
 ## ✨ 功能特性 (Features)
