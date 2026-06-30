@@ -1,0 +1,115 @@
+name: Build Kernel
+
+on:
+  workflow_dispatch: # Run manually only
+    inputs:
+        KSU:
+          description: 'Enable KernelSU'
+          type: boolean
+          required: false
+          default: true
+        Droidspace:
+          description: 'Enable Droidspace Support'
+          type: boolean
+          required: false
+          default: false
+        KVM:
+          description: 'Enable KVM (TODO)'
+          type: boolean
+          required: false
+          default: false
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+      packages: read
+
+    steps:
+    - uses: actions/checkout@v5
+      with:
+        ref: kernel-main
+        path: kernel_workspace/android-kernel
+
+    - name: setup env
+      run: |
+        sudo apt-get update
+        sudo -E apt-get -y -qq install git make bc bison ccache openssl dos2unix zip kmod cpio flex libelf-dev curl libssl-dev libtfm-dev wget device-tree-compiler ca-certificates python3 python2 binutils binutils-aarch64-linux-gnu binutils-arm-linux-gnueabi
+        mkdir -p $GITHUB_WORKSPACE/kernel_workspace
+
+    - name: setup GCC
+      run: |
+        cd $GITHUB_WORKSPACE/kernel_workspace
+
+        mkdir gcc64
+        wget -O gcc-aarch64.tar.gz https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-4.9/+archive/refs/tags/android-12.1.0_r27.tar.gz
+        tar -C gcc64/ -zxvf gcc-aarch64.tar.gz
+
+        mkdir gcc32
+        wget -O gcc-arm.tar.gz https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/arm/arm-linux-androideabi-4.9/+archive/refs/tags/android-12.1.0_r27.tar.gz
+        tar -C gcc32/ -zxvf gcc-arm.tar.gz
+
+    - name: setup Clang
+      run: |
+        cd $GITHUB_WORKSPACE/kernel_workspace
+        mkdir -p clang-aosp
+        wget -q https://dl.google.com/android/repository/android-ndk-r24-linux.zip
+        unzip -q android-ndk-r24-linux.zip
+        mv android-ndk-r24/toolchains/llvm/prebuilt/linux-x86_64/* clang-aosp/
+        rm -rf android-ndk-r24 android-ndk-r24-linux.zip
+
+    - name: setup KernelSU
+      run: |
+        cd $GITHUB_WORKSPACE/kernel_workspace/android-kernel
+        rm -rf KernelSU
+        curl -LSs "https://raw.githubusercontent.com/ReSukiSU/ReSukiSU/main/kernel/setup.sh" | bash
+        if ! ${{ inputs.KSU }} ; then
+            sed -i 's/CONFIG_KSU=y/# CONFIG_KSU is not set/' arch/arm64/configs/mo-mt6853_defconfig
+            echo "KernelSU Disabled"
+        else
+            echo "KernelSU Enabled"
+        fi
+
+    - name: enable Droidspace
+      run: |
+        cd $GITHUB_WORKSPACE/kernel_workspace/android-kernel
+        patch -p1 < .github/patches/0001-Enable-kernel-configurations-for-Droidspace.patch
+        patch -p1 < .github/patches/'02.fix_restore cgroup file prefix handling .patch'
+
+    - name: set ccache
+      uses: hendrikmuhs/ccache-action@v1.2
+      with:
+        key: build-kernel-mido-kernel
+        max-size: 2G
+
+    - name: compile
+      run: |
+        cd $GITHUB_WORKSPACE/kernel_workspace/android-kernel
+        export PATH=$GITHUB_WORKSPACE/kernel_workspace/clang-aosp/bin:$GITHUB_WORKSPACE/kernel_workspace/gcc64/bin:$GITHUB_WORKSPACE/kernel_workspace/gcc32/bin:$PATH
+        make -s -j$(nproc --all) O=out ARCH=arm64 mo-mt6853_defconfig
+        make -j$(nproc --all) CC="ccache clang" O=out ARCH=arm64 CLANG_TRIPLE=aarch64-linux-gnu- CROSS_COMPILE=aarch64-linux-android- CROSS_COMPILE_ARM32=arm-linux-androideabi- LD=ld.lld
+
+    - name: build AnyKernel3 package
+      run: |
+        cd $GITHUB_WORKSPACE/kernel_workspace
+        git clone https://github.com/momo54181/AnyKernel3
+        sed -i 's/do.devicecheck=1/do.devicecheck=0/g' AnyKernel3/anykernel.sh
+        sed -i 's!block=/dev/block/platform/omap/omap_hsmmc.0/by-name/boot;!block=auto;!g' AnyKernel3/anykernel.sh
+        sed -i 's/is_slot_device=0;/is_slot_device=auto;/g' AnyKernel3/anykernel.sh
+        cp android-kernel/out/arch/arm64/boot/Image.gz-dtb AnyKernel3/
+        rm -rf AnyKernel3/.git* AnyKernel3/README.md
+        zip -r mt6853-kernel-AnyKernel3.zip AnyKernel3/
+        ls -lh
+
+    - name: upload Anykernel3
+      uses: actions/upload-artifact@v4
+      with:
+        name: android-mt6853-kernel-Anykernel3
+        path: kernel_workspace/AnyKernel3/*
+
+    - name: upload kernel image
+      uses: actions/upload-artifact@v4
+      with:
+        name: Image.gz
+        path: kernel_workspace/android-kernel/out/arch/arm64/boot/Image.gz
