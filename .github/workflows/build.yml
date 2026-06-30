@@ -72,10 +72,11 @@ jobs:
         fi
 
     - name: enable Droidspace
+      if: ${{ inputs.Droidspace }}
       run: |
         cd $GITHUB_WORKSPACE/kernel_workspace/android-kernel
-        patch -p1 < .github/patches/0001-Enable-kernel-configurations-for-Droidspace.patch
         patch -p1 < .github/patches/'02.fix_restore cgroup file prefix handling .patch'
+        patch -p1 < .github/patches/0001-Enable-kernel-configurations-for-Droidspace.patch
 
     - name: set ccache
       uses: hendrikmuhs/ccache-action@v1.2
