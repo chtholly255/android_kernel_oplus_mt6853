@@ -79,7 +79,7 @@ jobs:
         patch -p1 < .github/patches/0001-Enable-kernel-configurations-for-Droidspace.patch
 
     - name: set ccache
-      uses: hendrikmuhs/ccache-action@v1.2
+      uses: hendrikmuhs/ccache-action@v1
       with:
         key: build-kernel-mido-kernel
         max-size: 2G
@@ -104,13 +104,13 @@ jobs:
         ls -lh
 
     - name: upload Anykernel3
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v6
       with:
         name: android-mt6853-kernel-Anykernel3
         path: kernel_workspace/AnyKernel3/*
 
     - name: upload kernel image
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v6
       with:
         name: Image.gz
         path: kernel_workspace/android-kernel/out/arch/arm64/boot/Image.gz
