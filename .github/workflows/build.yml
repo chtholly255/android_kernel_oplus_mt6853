@@ -14,7 +14,7 @@ on:
           required: false
           default: false
         KVM:
-          description: 'Enable KVM (TODO)'
+          description: 'Enable KVM'
           type: boolean
           required: false
           default: false
@@ -77,6 +77,12 @@ jobs:
         cd $GITHUB_WORKSPACE/kernel_workspace/android-kernel
         patch -p1 < .github/patches/'02.fix_restore cgroup file prefix handling .patch'
         patch -p1 < .github/patches/0001-Enable-kernel-configurations-for-Droidspace.patch
+
+    - name: enable KVM
+      if: ${{ inputs.KVM }}
+      run: |
+        cd $GITHUB_WORKSPACE/kernel_workspace/android-kernel
+        patch -p1 < .github/patches/0001-Enable-KVM.patch
 
     - name: set ccache
       uses: hendrikmuhs/ccache-action@v1
