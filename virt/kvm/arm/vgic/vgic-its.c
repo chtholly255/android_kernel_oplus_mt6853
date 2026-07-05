@@ -910,7 +910,7 @@ static int vgic_its_cmd_handle_mapi(struct kvm *kvm, struct vgic_its *its,
 }
 
 /* Requires the its_lock to be held. */
-static void vgic_its_unmap_device(struct kvm *kvm, struct its_device *device)
+static void vgic_its_free_device(struct kvm *kvm, struct its_device *device)
 {
 	struct its_ite *ite, *temp;
 
@@ -924,6 +924,24 @@ static void vgic_its_unmap_device(struct kvm *kvm, struct its_device *device)
 
 	list_del(&device->dev_list);
 	kfree(device);
+}
+
+/* its lock must be held */
+static void vgic_its_free_device_list(struct kvm *kvm, struct vgic_its *its)
+{
+	struct its_device *cur, *temp;
+
+	list_for_each_entry_safe(cur, temp, &its->device_list, dev_list)
+		vgic_its_free_device(kvm, cur);
+}
+
+/* its lock must be held */
+static void vgic_its_free_collection_list(struct kvm *kvm, struct vgic_its *its)
+{
+	struct its_collection *cur, *temp;
+
+	list_for_each_entry_safe(cur, temp, &its->collection_list, coll_list)
+		vgic_its_free_collection(its, cur->collection_id);
 }
 
 /* Must be called with its_lock mutex held */
@@ -973,7 +991,7 @@ static int vgic_its_cmd_handle_mapd(struct kvm *kvm, struct vgic_its *its,
 	 * by removing the mapping and re-establishing it.
 	 */
 	if (device)
-		vgic_its_unmap_device(kvm, device);
+		vgic_its_free_device(kvm, device);
 
 	/*
 	 * The spec does not say whether unmapping a not-mapped device
@@ -1639,46 +1657,17 @@ static int vgic_its_create(struct kvm_device *dev, u32 type)
 	return vgic_its_set_abi(its, NR_ITS_ABIS - 1);
 }
 
-static void vgic_its_free_device(struct kvm *kvm, struct its_device *dev)
-{
-	struct its_ite *ite, *tmp;
-
-	list_for_each_entry_safe(ite, tmp, &dev->itt_head, ite_list)
-		its_free_ite(kvm, ite);
-	list_del(&dev->dev_list);
-	kfree(dev);
-}
-
 static void vgic_its_destroy(struct kvm_device *kvm_dev)
 {
 	struct kvm *kvm = kvm_dev->kvm;
 	struct vgic_its *its = kvm_dev->private;
-	struct list_head *cur, *temp;
-
-	/*
-	 * We may end up here without the lists ever having been initialized.
-	 * Check this and bail out early to avoid dereferencing a NULL pointer.
-	 */
-	if (!its->device_list.next)
-		return;
 
 	mutex_lock(&its->its_lock);
-	list_for_each_safe(cur, temp, &its->device_list) {
-		struct its_device *dev;
 
-		dev = list_entry(cur, struct its_device, dev_list);
-		vgic_its_free_device(kvm, dev);
-	}
+	vgic_its_free_device_list(kvm, its);
+	vgic_its_free_collection_list(kvm, its);
 
-	list_for_each_safe(cur, temp, &its->collection_list) {
-		struct its_collection *coll;
-
-		coll = list_entry(cur, struct its_collection, coll_list);
-		list_del(cur);
-		kfree(coll);
-	}
 	mutex_unlock(&its->its_lock);
-
 	kfree(its);
 	kfree(kvm_dev);/* alloc by kvm_ioctl_create_device, free by .destroy */
 }
