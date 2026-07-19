@@ -378,9 +378,9 @@ CONFIG_IOSCHED_DEADLINE=y
 CONFIG_IOSCHED_CFQ=y
 CONFIG_CFQ_GROUP_IOSCHED=y
 # CONFIG_DEFAULT_DEADLINE is not set
-CONFIG_DEFAULT_CFQ=y
-# CONFIG_DEFAULT_NOOP is not set
-CONFIG_DEFAULT_IOSCHED="cfq"
+# CONFIG_DEFAULT_CFQ is not set
+CONFIG_DEFAULT_NOOP=y
+CONFIG_DEFAULT_IOSCHED="noop"
 CONFIG_MQ_IOSCHED_DEADLINE=y
 CONFIG_MQ_IOSCHED_KYBER=y
 # CONFIG_IOSCHED_BFQ is not set
@@ -2324,6 +2324,12 @@ CONFIG_WLAN_VENDOR_QUANTENNA=y
 # Enable WiMAX (Networking options) to see the WiMAX drivers
 #
 # CONFIG_WAN is not set
+
+#
+# Re:Kernel
+#
+CONFIG_REKERNEL=y
+# CONFIG_REKERNEL_DEBUG is not set
 # CONFIG_ISDN is not set
 
 #
@@ -5177,11 +5183,11 @@ CONFIG_KSU_FULL_NAME_FORMAT="%TAG_NAME%-%COMMIT_SHA%@Momo5418"
 # CONFIG_KSU_DISABLE_POLICY is not set
 CONFIG_KSU_MULTI_MANAGER_SUPPORT=y
 # CONFIG_KSU_TRACEPOINT_HOOK is not set
-CONFIG_KSU_MANUAL_HOOK=y
-# CONFIG_KSU_SUSFS is not set
+# CONFIG_KSU_MANUAL_HOOK is not set
+CONFIG_KSU_SUSFS=y
 
 #
-# KernelSU - Manual Hook Auto hook
+# KernelSU - SUSFS
 #
 
 #
@@ -5193,23 +5199,29 @@ CONFIG_KSU_MANUAL_HOOK=y
 #
 
 #
-# If anything mismatch with document, Kernel compile maybe FAILED!
+# If anything mismatch with simonpunk's patch, Kernel compile maybe FAILED!
 #
 
 #
-# See document if you face any compile failed due to hook check
+# See simonpunk's original patch if you face any compile failed due to hook check
 #
 
 #
-# Document: https://resukisu.github.io/guide/manual-integrate.html
+# Repo: https://gitlab.com/simonpunk/susfs4ksu
 #
 
 #
 # --------------------------------------------------------------
 #
-CONFIG_KSU_MANUAL_HOOK_AUTO_SETUID_HOOK=y
-CONFIG_KSU_MANUAL_HOOK_AUTO_INITRC_HOOK=y
-CONFIG_KSU_MANUAL_HOOK_AUTO_INPUT_HOOK=y
+CONFIG_KSU_SUSFS_SUS_PATH=y
+CONFIG_KSU_SUSFS_SUS_MOUNT=y
+CONFIG_KSU_SUSFS_SUS_KSTAT=y
+CONFIG_KSU_SUSFS_SPOOF_UNAME=y
+CONFIG_KSU_SUSFS_ENABLE_LOG=y
+CONFIG_KSU_SUSFS_HIDE_KSU_SUSFS_SYMBOLS=y
+CONFIG_KSU_SUSFS_SPOOF_CMDLINE_OR_BOOTCONFIG=y
+CONFIG_KSU_SUSFS_OPEN_REDIRECT=y
+CONFIG_KSU_SUSFS_SUS_MAP=y
 
 #
 # Firmware Drivers
