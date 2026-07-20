@@ -65,11 +65,19 @@ jobs:
         mv android-ndk-r24/toolchains/llvm/prebuilt/linux-x86_64/* clang-aosp/
         rm -rf android-ndk-r24 android-ndk-r24-linux.zip
 
+    - name: load config
+      run: |
+        cd $GITHUB_WORKSPACE/kernel_workspace/android-kernel
+        export PATH=$GITHUB_WORKSPACE/kernel_workspace/clang-aosp/bin:$GITHUB_WORKSPACE/kernel_workspace/gcc64/bin:$GITHUB_WORKSPACE/kernel_workspace/gcc32/bin:$PATH
+        make -j$(nproc --all) O=out ARCH=arm64 mo-mt6853_defconfig
+
     - name: setup KernelSU
       run: |
         cd $GITHUB_WORKSPACE/kernel_workspace/android-kernel
         if ! ${{ inputs.KSU }} ; then
-            sed -i 's/CONFIG_KSU=y/# CONFIG_KSU is not set/' arch/arm64/configs/mo-mt6853_defconfig
+            scripts/config -d CONFIG_KSU
+            export PATH=$GITHUB_WORKSPACE/kernel_workspace/clang-aosp/bin:$GITHUB_WORKSPACE/kernel_workspace/gcc64/bin:$GITHUB_WORKSPACE/kernel_workspace/gcc32/bin:$PATH
+            make -j$(nproc --all) O=out ARCH=arm64 oldconfig
             echo "KernelSU Disabled"
         else
             echo "KernelSU Enabled"
@@ -79,12 +87,14 @@ jobs:
       run: |
         cd $GITHUB_WORKSPACE/kernel_workspace/android-kernel
         if ! ${{ inputs.SUSFS }}; then
-          sed -i 's/CONFIG_KSU_SUSFS=y/# CONFIG_KSU_SUSFS is not set/' arch/arm64/configs/mo-mt6853_defconfig
-          echo "SUSFS Disabled"
+            scripts/config -d CONFIG_KSU_SUSFS
+            export PATH=$GITHUB_WORKSPACE/kernel_workspace/clang-aosp/bin:$GITHUB_WORKSPACE/kernel_workspace/gcc64/bin:$GITHUB_WORKSPACE/kernel_workspace/gcc32/bin:$PATH
+            make -j$(nproc --all) O=out ARCH=arm64 oldconfig
+            echo "SUSFS Disabled"
         elif ! ${{ inputs.KSU }}; then
-          echo "KernelSU required. SUSFS Disabled"
+            echo "KernelSU required. SUSFS Disabled"
         else
-          echo "SUSFS Enabled"
+            echo "SUSFS Enabled"
         fi
 
     - name: enable Droidspace
@@ -92,13 +102,13 @@ jobs:
       run: |
         cd $GITHUB_WORKSPACE/kernel_workspace/android-kernel
         patch -p1 < .github/patches/'02.fix_restore cgroup file prefix handling .patch'
-        patch -p1 < .github/patches/0001-Enable-kernel-configurations-for-Droidspace.patch
+        scripts/kconfig/merge_config.sh .github/kernel_config/Droidspace.config
 
     - name: enable KVM
       if: ${{ inputs.KVM }}
       run: |
         cd $GITHUB_WORKSPACE/kernel_workspace/android-kernel
-        patch -p1 < .github/patches/0001-Enable-KVM.patch
+        scripts/kconfig/merge_config.sh .github/kernel_config/KVM.config
 
     - name: set ccache
       uses: hendrikmuhs/ccache-action@v1
@@ -110,7 +120,6 @@ jobs:
       run: |
         cd $GITHUB_WORKSPACE/kernel_workspace/android-kernel
         export PATH=$GITHUB_WORKSPACE/kernel_workspace/clang-aosp/bin:$GITHUB_WORKSPACE/kernel_workspace/gcc64/bin:$GITHUB_WORKSPACE/kernel_workspace/gcc32/bin:$PATH
-        make -s -j$(nproc --all) O=out ARCH=arm64 mo-mt6853_defconfig
         make -j$(nproc --all) CC="ccache clang" O=out ARCH=arm64 CLANG_TRIPLE=aarch64-linux-gnu- CROSS_COMPILE=aarch64-linux-android- CROSS_COMPILE_ARM32=arm-linux-androideabi- LD=ld.lld
 
     - name: build AnyKernel3 package
