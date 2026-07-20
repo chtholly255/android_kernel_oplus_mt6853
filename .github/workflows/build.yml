@@ -8,6 +8,11 @@ on:
           type: boolean
           required: false
           default: true
+        SUSFS:
+          description: 'Enable SUSFS (KernelSU required)'
+          type: boolean
+          required: false
+          default: false
         Droidspace:
           description: 'Enable Droidspace Support'
           type: boolean
@@ -31,6 +36,7 @@ jobs:
       with:
         ref: kernel-main
         path: kernel_workspace/android-kernel
+        submodules: recursive
 
     - name: setup env
       run: |
@@ -61,15 +67,22 @@ jobs:
 
     - name: setup KernelSU
       run: |
-        cd $GITHUB_WORKSPACE/kernel_workspace/android-kernel
-        rm -rf KernelSU
-        curl -LSs "https://raw.githubusercontent.com/ReSukiSU/ReSukiSU/main/kernel/setup.sh" | bash
         if ! ${{ inputs.KSU }} ; then
             sed -i 's/CONFIG_KSU=y/# CONFIG_KSU is not set/' arch/arm64/configs/mo-mt6853_defconfig
             echo "KernelSU Disabled"
         else
             echo "KernelSU Enabled"
         fi
+
+    - name: setup SUSFS
+      run: |
+        if ! ${{ inputs.SUSFS }}; then
+          sed -i 's/CONFIG_KSU_SUSFS=y/# CONFIG_KSU_SUSFS is not set/' arch/arm64/configs/mo-mt6853_defconfig
+          echo "SUSFS Disabled"
+        elif ! ${{ inputs.KSU }}; then
+          echo "KernelSU required. SUSFS Disabled"
+        else
+          echo "SUSFS Enabled"
 
     - name: enable Droidspace
       if: ${{ inputs.Droidspace }}
