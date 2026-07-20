@@ -67,6 +67,7 @@ jobs:
 
     - name: setup KernelSU
       run: |
+        cd $GITHUB_WORKSPACE/kernel_workspace/android-kernel
         if ! ${{ inputs.KSU }} ; then
             sed -i 's/CONFIG_KSU=y/# CONFIG_KSU is not set/' arch/arm64/configs/mo-mt6853_defconfig
             echo "KernelSU Disabled"
@@ -76,6 +77,7 @@ jobs:
 
     - name: setup SUSFS
       run: |
+        cd $GITHUB_WORKSPACE/kernel_workspace/android-kernel
         if ! ${{ inputs.SUSFS }}; then
           sed -i 's/CONFIG_KSU_SUSFS=y/# CONFIG_KSU_SUSFS is not set/' arch/arm64/configs/mo-mt6853_defconfig
           echo "SUSFS Disabled"
@@ -83,6 +85,7 @@ jobs:
           echo "KernelSU required. SUSFS Disabled"
         else
           echo "SUSFS Enabled"
+        fi
 
     - name: enable Droidspace
       if: ${{ inputs.Droidspace }}
